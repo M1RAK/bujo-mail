@@ -1,34 +1,43 @@
+import type { WebhookEvent } from "@clerk/nextjs/server";
+import { headers } from "next/headers";
+import { Webhook } from "svix";
 import { db } from "@/server/db";
 
-export const POST = async (request: Request) => {
-  try {
-    const { data } = await request.json();
-    console.log("Received webhook event:", data);
-    
-    const {
-      id,
-      first_name: firstName,
-      last_name: lastName,
-      image_url: imageUrl,
-    } = data;
-    const email = data.email_addresses[0]?.email_address || "";
+const webhookSecret = process.env.CLERK_WEBHOOK_SECRET || "";
 
-    await db.user.upsert({
-      where: { id },
-      update: {
-        email,
-        firstName,
-        lastName,
-        imageUrl,
-      },
-      create: {
-        id,
-        email,
-        firstName,
-        lastName,
-        imageUrl,
-      },
-    });
+async function validateRequest(request: Request) {
+  const payloadString = await request.text();
+  const headerPayload = await headers();
+  const svixHeaders = {
+    "svix-id": headerPayload.get("svix-id")!,
+    "svix-timestamp": headerPayload.get("svix-timestamp")!,
+    "svix-signature": headerPayload.get("svix-signature")!,
+  };
+
+  const wh = new Webhook(webhookSecret);
+  return wh.verify(payloadString, svixHeaders) as WebhookEvent;
+}
+
+export async function POST(request: Request) {
+  try {
+    const payload: WebhookEvent = await validateRequest(request);
+    console.log("Received webhook event:", payload);
+
+    if (payload.type === "user.created") {
+      const user = payload.data;
+      const id = user.id;
+      const firstName = user.first_name ?? "";
+      const lastName = user.last_name ?? "";
+      const email = user.email_addresses[0]?.email_address ?? "";
+      const imageUrl = user.image_url;
+
+      await db.user.upsert({
+        where: { id },
+        update: { email, firstName, lastName, imageUrl },
+        create: { id, email, firstName, lastName, imageUrl },
+      });
+    }
+
     return new Response(
       JSON.stringify({ status: "success", message: "Webhook received" }),
       {
@@ -46,4 +55,11 @@ export const POST = async (request: Request) => {
       },
     );
   }
-};
+}
+
+export function GET() {
+  return new Response("Clerk webhook endpoint", {
+    status: 200,
+    headers: { "Content-Type": "text/plain" },
+  });
+}
