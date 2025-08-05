@@ -4,23 +4,29 @@ export const POST = async (request: Request) => {
   try {
     const { data } = await request.json();
     console.log("Received webhook event:", data);
-    const { id, first_name, last_name, image_url } = data;
+    
+    const {
+      id,
+      first_name: firstName,
+      last_name: lastName,
+      image_url: imageUrl,
+    } = data;
     const email = data.email_addresses[0]?.email_address || "";
 
     await db.user.upsert({
       where: { id },
       update: {
         email,
-        firstName: first_name,
-        lastName: last_name,
-        imageUrl: image_url,
+        firstName,
+        lastName,
+        imageUrl,
       },
       create: {
         id,
         email,
-        firstName: first_name,
-        lastName: last_name,
-        imageUrl: image_url,
+        firstName,
+        lastName,
+        imageUrl,
       },
     });
     return new Response(
