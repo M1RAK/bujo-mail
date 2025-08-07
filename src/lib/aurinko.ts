@@ -19,7 +19,7 @@ export const getAurinkoAuthorizationUrl = async (
   return `${process.env.AURINKO_BASEURL}/auth/authorize?${params.toString()}`;
 };
 
-export const exchangeCodeForAccessToken = async (code: string) => {
+export const getAurinkoToken = async (code: string) => {
   try {
     const response = await axios.post(
       `${process.env.AURINKO_BASEURL}/auth/token/${code}`,

@@ -1,7 +1,10 @@
-import { exchangeCodeForAccessToken, getAccountDetails } from "@/lib/aurinko";
-import { db } from "@/server/db";
 import { auth } from "@clerk/nextjs/server";
+import axios from "axios";
 import { NextResponse, type NextRequest } from "next/server";
+import { waitUntil } from "@vercel/functions";
+
+import { getAurinkoToken, getAccountDetails } from "@/lib/aurinko";
+import { db } from "@/server/db";
 
 export const GET = async (request: NextRequest) => {
   const { userId } = await auth();
@@ -9,8 +12,9 @@ export const GET = async (request: NextRequest) => {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
   const params = request.nextUrl.searchParams;
+
   const status = params.get("status");
-  if (!status)
+  if (status !== "success")
     return NextResponse.json(
       { message: "Failed to link account" },
       { status: 401 },
@@ -19,8 +23,8 @@ export const GET = async (request: NextRequest) => {
   const code = params.get("code");
   if (!code)
     return NextResponse.json({ message: "No code provided" }, { status: 400 });
-  const token = await exchangeCodeForAccessToken(code);
 
+  const token = await getAurinkoToken(code as string);
   if (!token)
     return NextResponse.json(
       { message: "Failed to exchange code for access token." },
@@ -33,17 +37,29 @@ export const GET = async (request: NextRequest) => {
     where: {
       id: token.accountId.toString(),
     },
-    update: {
-      accessToken: token.accessToken,
-    },
     create: {
       id: token.accessToken.toString(),
       userId,
-      email: accountDetails.email,
+      emailAddress: accountDetails.email,
       name: accountDetails.name,
-      accessToken: token.accessToken,
+      token: token.accessToken,
+    },
+    update: {
+      token: token.accessToken,
     },
   });
+
+  // trigger initial sync endpoint
+
+  waitUntil(
+    axios
+      .post(`${process.env.NEXT_PUBLIC_URL}/api/initial-sync`, {
+        accountId: token.accountId.toString(),
+        userId,
+      })
+      .then((response) => console.log("Initial sync triggered", response.data))
+      .catch((error) => console.error("Failed to trigger initial sync", error)),
+  );
 
   return NextResponse.redirect(new URL("/mail", request.url));
 };

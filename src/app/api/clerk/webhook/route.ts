@@ -4,19 +4,20 @@ import { db } from "@/server/db";
 export async function POST(request: Request) {
   try {
     const payload: WebhookEvent = await request.json();
+    console.log(payload)
 
     if (payload.type === "user.created") {
       const user = payload.data;
       const id = user.id;
       const firstName = user.first_name ?? "";
       const lastName = user.last_name ?? "";
-      const email = user.email_addresses[0]?.email_address ?? "";
+      const emailAddress = user.email_addresses[0]?.email_address ?? "";
       const imageUrl = user.image_url;
 
       await db.user.upsert({
         where: { id },
-        update: { email, firstName, lastName, imageUrl },
-        create: { id, email, firstName, lastName, imageUrl },
+        update: { emailAddress, firstName, lastName, imageUrl },
+        create: { id, emailAddress, firstName, lastName, imageUrl },
       });
     }
 

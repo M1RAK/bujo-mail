@@ -110,6 +110,9 @@ importers:
       '@trpc/server':
         specifier: ^11.0.0
         version: 11.4.4(typescript@5.9.2)
+      '@vercel/functions':
+        specifier: ^2.2.8
+        version: 2.2.8
       axios:
         specifier: ^1.11.0
         version: 1.11.0
@@ -1599,6 +1602,19 @@ packages:
     resolution: {integrity: sha512-lrW200hZdbfRtztbygyaq/6jP6AKE8qQN2KvPcJ+x7wiD038YtnYtZ82IMNJ69GJibV7bwL3y9FgK+5w/pYt6g==}
     cpu: [x64]
     os: [win32]
+
+  '@vercel/functions@2.2.8':
+    resolution: {integrity: sha512-Y4G2MEYCVTBtEeo6/+Ydwu5ehwryThJ7or3EM0oZa+oMDLm+z6VchDDc7rNmNIrtTS1ULcUYNqAItjs0mHMgKw==}
+    engines: {node: '>= 18'}
+    peerDependencies:
+      '@aws-sdk/credential-provider-web-identity': '*'
+    peerDependenciesMeta:
+      '@aws-sdk/credential-provider-web-identity':
+        optional: true
+
+  '@vercel/oidc@2.0.0':
+    resolution: {integrity: sha512-U0hncpXof7gC9xtmSrjz6vrDqdwJXi8z/zSc9FyS80AoXKfCZtpkBz9gtL3x30Agmpxpwe35P1W2dP9Epa/RGA==}
+    engines: {node: '>= 18'}
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -4715,6 +4731,12 @@ snapshots:
 
   '@unrs/resolver-binding-win32-x64-msvc@1.11.1':
     optional: true
+
+  '@vercel/functions@2.2.8':
+    dependencies:
+      '@vercel/oidc': 2.0.0
+
+  '@vercel/oidc@2.0.0': {}
 
   acorn-jsx@5.3.2(acorn@8.15.0):
     dependencies:
