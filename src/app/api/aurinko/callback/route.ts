@@ -9,7 +9,7 @@ import { db } from "@/server/db";
 export const GET = async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId)
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
 
   const params = request.nextUrl.searchParams;
 
@@ -38,11 +38,11 @@ export const GET = async (request: NextRequest) => {
       id: token.accountId.toString(),
     },
     create: {
-      id: token.accessToken.toString(),
+      id: token.accountId.toString(),
       userId,
+      token: token.accessToken,
       emailAddress: accountDetails.email,
       name: accountDetails.name,
-      token: token.accessToken,
     },
     update: {
       token: token.accessToken,

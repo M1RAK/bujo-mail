@@ -4,7 +4,6 @@ import { db } from "@/server/db";
 export async function POST(request: Request) {
   try {
     const payload: WebhookEvent = await request.json();
-    console.log(payload)
 
     if (payload.type === "user.created") {
       const user = payload.data;

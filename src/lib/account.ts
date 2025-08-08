@@ -17,7 +17,7 @@ export class Account {
           Authorization: `Bearer ${this.token}`,
         },
         params: {
-          daysWithin: 90,
+          daysWithin: 3,
           bodyType: "html",
         },
       },
@@ -37,7 +37,7 @@ export class Account {
     if (pageToken) params.pageToken = pageToken;
 
     const response = await axios.get<SyncUpdatedResponse>(
-      `${process.env.AURINKO_BASEURL}/sync/updated`,
+      `${process.env.AURINKO_BASEURL}/email/sync/updated`,
       {
         headers: {
           Authorization: `Bearer ${this.token}`,
@@ -45,6 +45,7 @@ export class Account {
         params,
       },
     );
+    return response.data;
   }
 
   async performInitialSync() {
@@ -54,9 +55,10 @@ export class Account {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         syncResponse = await this.startSync();
       }
+
       let storedDeltaToken: string = syncResponse.syncUpdatedToken;
       let updatedResponse = await this.getUpdatedEmails({
-        deltaToken: storedDeltaToken,
+        deltaToken: syncResponse.syncUpdatedToken,
       });
 
       if (updatedResponse.nextDeltaToken) {
@@ -76,12 +78,15 @@ export class Account {
           storedDeltaToken = updatedResponse.nextDeltaToken;
         }
       }
+      // Property 'nextDeltaToken' does not exist on type 'void'.
 
       console.log("Initial sync complete. Total emails:", allEmails.length);
+
       return {
         emails: allEmails,
         deltaToken: storedDeltaToken,
       };
+
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error(
